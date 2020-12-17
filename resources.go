@@ -1,9 +1,10 @@
 package main
 
 import (
+	"crypto/rand"
 	"encoding/json"
 	"io/ioutil"
-	"math/rand"
+	"math/big"
 	"net/http"
 	"strings"
 )
@@ -24,7 +25,7 @@ func newWord(value string) Word {
 }
 
 func randomLetter() byte {
-	return LETTERS[rand.Intn(25)]
+	return LETTERS[generateRandomInt(25)]
 }
 
 func WordRequest() []Word {
@@ -43,8 +44,14 @@ func WordRequest() []Word {
 	return words
 }
 
+func generateRandomInt(max int) int {
+	bmax := big.NewInt(int64(max))
+	response, _ := rand.Int(rand.Reader, bmax)
+	return int(response.Int64())
+}
+
 func chooseRandomWord(words []Word) Word {
-	var randomInt = rand.Intn(len(words) - 1)
+	var randomInt = generateRandomInt(len(words) - 1)
 
 	return words[randomInt]
 }
