@@ -5,8 +5,10 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"math/big"
+	mrand "math/rand"
 	"net/http"
 	"strings"
+	"time"
 )
 
 var LETTERS = "abcdefghijklmnopqrstuvwxyz"
@@ -20,28 +22,8 @@ type PassPhrase struct {
 	Value string `json:"passphrase"`
 }
 
-func newWord(value string) Word {
-	return Word{value}
-}
-
 func randomLetter() byte {
 	return LETTERS[generateRandomInt(25)]
-}
-
-func WordRequest() []Word {
-	var url = "http://api.datamuse.com/words?sp=" + string(randomLetter()) + "*"
-	req, _ := http.NewRequest("GET", url, nil)
-
-	res, _ := http.DefaultClient.Do(req)
-
-	defer res.Body.Close()
-
-	body, _ := ioutil.ReadAll(res.Body)
-
-	var words []Word
-	json.Unmarshal(body, &words)
-
-	return words
 }
 
 func generateRandomInt(max int) int {
@@ -56,12 +38,30 @@ func chooseRandomWord(words []Word) Word {
 	return words[randomInt]
 }
 
-func GetPassPhrase() PassPhrase {
-	var words []string
+func WordRequest(newWords chan<- []Word) {
+	var url = "http://api.datamuse.com/words?sp=" + string(randomLetter()) + "*"
+	req, _ := http.NewRequest("GET", url, nil)
+	res, _ := http.DefaultClient.Do(req)
 
+	defer res.Body.Close()
+
+	body, _ := ioutil.ReadAll(res.Body)
+	var words []Word
+	json.Unmarshal(body, &words)
+	newWords <- words
+}
+
+func GetPassPhrase() (passPhrase PassPhrase) {
+	var words []string
+	var newWords chan []Word = make(chan []Word)
 	for i := 0; i < PASSPHRASE_SIZE; i++ {
-		newWords := WordRequest()
-		words = append(words, chooseRandomWord(newWords).Value)
+		go WordRequest(newWords)
 	}
-	return PassPhrase{strings.Join(words, " ")}
+	for i := 0; i < PASSPHRASE_SIZE; i++ {
+		words = append(words, chooseRandomWord(<-newWords).Value)
+	}
+	mrand.Seed(time.Now().UnixNano())
+	mrand.Shuffle(len(words), func(i, j int) { words[i], words[j] = words[j], words[i] })
+	passPhrase = PassPhrase{strings.Join(words, " ")}
+	return
 }
