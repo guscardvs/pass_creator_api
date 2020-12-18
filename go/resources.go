@@ -11,8 +11,8 @@ import (
 	"time"
 )
 
-var LETTERS = "abcdefghijklmnopqrstuvwxyz"
-var PASSPHRASE_SIZE = 5
+const letters = "abcdefghijklmnopqrstuvwxyz"
+const passphraseSize = 5
 
 type Word struct {
 	Value string `json:"word"`
@@ -29,7 +29,7 @@ func generateRandomInt(max int) int {
 }
 
 func randomLetter() byte {
-	return LETTERS[generateRandomInt(25)]
+	return letters[generateRandomInt(25)]
 }
 
 func chooseRandomWord(words []Word) Word {
@@ -54,10 +54,10 @@ func WordRequest(newWords chan<- []Word) {
 func GetPassPhrase() (passPhrase PassPhrase) {
 	var words []string
 	var newWords chan []Word = make(chan []Word)
-	for i := 0; i < PASSPHRASE_SIZE; i++ {
+	for i := 0; i < passphraseSize; i++ {
 		go WordRequest(newWords)
 	}
-	for i := 0; i < PASSPHRASE_SIZE; i++ {
+	for i := 0; i < passphraseSize; i++ {
 		words = append(words, chooseRandomWord(<-newWords).Value)
 	}
 	mrand.Seed(time.Now().UnixNano())
