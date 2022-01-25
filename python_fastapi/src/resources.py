@@ -18,8 +18,7 @@ URL = "http://api.datamuse.com/words?sp={letter}*"
 
 
 def random_item(list_, max_):
-    response = list_[randbelow(max_)]
-    return response
+    return list_[randbelow(max_)]
 
 
 async def word_request():
@@ -33,6 +32,5 @@ async def get_passphrase():
     for cor in asyncio.as_completed([word_request() for _ in range(PASSPHASE_SIZE)]):
         words.append((await cor).get("word"))
     shuffle(words)
-    string = " ".join(words)
-    return string
+    return " ".join(words)
     
